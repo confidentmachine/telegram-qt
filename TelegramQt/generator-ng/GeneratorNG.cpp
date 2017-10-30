@@ -218,16 +218,18 @@ QString formatMethodParams(const TLMethod &method)
     return result;
 }
 
-QString getTypeOrVectorType(const QString &str)
+QString getTypeOrVectorType(const QString &str, bool *isVectorPtr = nullptr)
 {
-    if (!str.startsWith(tlVectorType + QLatin1Char('<'))) {
+    bool isVector = str.startsWith(tlVectorType + QLatin1Char('<'));
+    if (isVectorPtr) {
+        *isVectorPtr = isVector;
+    }
+    if (!isVector) {
         return str;
     }
-
     int firstIndex = str.indexOf(QLatin1Char('<')) + 1;
     int lastIndex = str.indexOf(QLatin1Char('>'));
     const QString subType = str.mid(firstIndex, lastIndex - firstIndex);
-
     return subType;
 }
 
@@ -270,7 +272,7 @@ QString formatType(QString type)
         int firstIndex = type.indexOf(QLatin1Char('<')) + 1;
         int lastIndex = type.indexOf(QLatin1Char('>'));
         QString subType = type.mid(firstIndex, lastIndex - firstIndex);
-        return QString("%1<%2>").arg(tlVectorType).arg(formatType(subType));
+        return QStringLiteral("%1<%2>").arg(tlVectorType).arg(formatType(subType));
     } else {
         type[0] = type.at(0).toUpper();
 
@@ -488,10 +490,10 @@ QStringList GeneratorNG::generateTLTypeMembers(const TLType &type)
     QStringList addedMembers;
     foreach (const TLSubType &subType, type.subTypes) {
         foreach (const TLParam &member, subType.members) {
-            if (addedMembers.contains(member.name)) {
+            if (addedMembers.contains(member.getName())) {
                 continue;
             }
-            addedMembers.append(member.name);
+            addedMembers.append(member.getName());
             if (member.dependOnFlag() && (member.type == QLatin1String("TLTrue"))) {
                 continue; // No extra data behind the flag
             }
@@ -824,20 +826,34 @@ QList<TLType> GeneratorNG::solveTypes(QMap<QString, TLType> types, QMap<QString,
 
             for (TLSubType &subType : type.subTypes) {
                 for (TLParam &member : subType.members) {
+                    bool isVector;
+                    QString memberType = getTypeOrVectorType(member.type, &isVector);
+                    if (memberType == type.name) {
+                        // Self-referenced
+                        member.selfReferenced = true;
+                        if (isVector) {
+                            member.type = QStringLiteral("%1<%2*>").arg(tlVectorType, memberType);
+                        }
+                    }
+
                     if (members.values(member.name).count() > 1) {
                         QString typeWithoutTL = removeTypePrefix(member.type);
                         typeWithoutTL = removeWord(typeWithoutTL, member.name);
                         if (member.name.compare(typeWithoutTL, Qt::CaseInsensitive) != 0) {
                             member.alias = member.name + typeWithoutTL;
                         }
-                        if (member.type == type.name) {
-                            // Self-referenced
+                        if (member.selfReferenced) {
                             member.alias = QLatin1Char('*') + member.getName();
                         }
                     }
                 }
             }
         }
+//        for (const QString &typeName : types.keys()) {
+//            TLType &type = types[typeName];
+
+
+//        }
     }
 
     QVector<TypeTreeItem> typeTree;

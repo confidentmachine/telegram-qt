@@ -828,7 +828,11 @@ QList<TLType> GeneratorNG::solveTypes(QMap<QString, TLType> types, QMap<QString,
                         QString typeWithoutTL = removeTypePrefix(member.type);
                         typeWithoutTL = removeWord(typeWithoutTL, member.name);
                         if (member.name.compare(typeWithoutTL, Qt::CaseInsensitive) != 0) {
-                            member.name.append(typeWithoutTL);
+                            member.alias = member.name + typeWithoutTL;
+                        }
+                        if (member.type == type.name) {
+                            // Self-referenced
+                            member.alias = QLatin1Char('*') + member.getName();
                         }
                     }
                 }
@@ -884,6 +888,7 @@ QList<TLType> GeneratorNG::solveTypes(QMap<QString, TLType> types, QMap<QString,
                 for (TypeTreeItem *dependence : item->dependencies) {
                     if (dependence == item) {
                         // Depend on self
+                        types[item->typeName].selfReferenced.value = true;
                         continue;
                     }
                     if (!notSolvedTypes.contains(dependence)) {

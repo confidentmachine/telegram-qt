@@ -61,9 +61,16 @@ struct TLSubType {
     }
 };
 
+struct Bool {
+    Bool() : value(false) { }
+
+    bool value;
+};
+
 struct TLType {
     QString name;
     QList<TLSubType> subTypes;
+    Bool selfReferenced;
 };
 
 struct TLMethod {

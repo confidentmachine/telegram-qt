@@ -26,15 +26,21 @@
 #include <QVector>
 
 struct TLParam {
-    TLParam() { }
+    TLParam() :
+        flagBit(0),
+        selfReferenced(false)
+    { }
     TLParam(const QString &newName, const QString &newType, qint8 newFlagBit = -1) :
-        name(newName), type(newType), flagBit(newFlagBit) { }
+        name(newName), type(newType), flagBit(newFlagBit), selfReferenced(false) { }
 
     QString name;
     QString type;
+    QString alias;
     qint8 flagBit;
     QString flagMember;
+    bool selfReferenced;
 
+    QString getName() const { return alias.isEmpty() ? name : alias; }
     bool dependOnFlag() const { return flagBit >= 0; }
 };
 

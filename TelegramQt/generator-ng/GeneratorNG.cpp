@@ -133,6 +133,16 @@ QString formatName(QString name)
     return name;
 }
 
+QString formatName1stSmall(QString name)
+{
+    if (name.isEmpty()) {
+        return QString();
+    }
+
+    name[0] = name.at(0).toLower();
+    return name;
+}
+
 QString formatName1stCapital(QString name)
 {
     if (name.isEmpty()) {
@@ -485,7 +495,7 @@ QStringList GeneratorNG::generateTLTypeMembers(const TLType &type)
             if (member.dependOnFlag() && (member.type == QLatin1String("TLTrue"))) {
                 continue; // No extra data behind the flag
             }
-            membersCode.append(QStringLiteral("%1 %2;").arg(member.type, member.name));
+            membersCode.append(QStringLiteral("%1 %2;").arg(member.type, member.getName()));
         }
     }
     membersCode.append(QStringLiteral("%1 %2;").arg(tlValueName, tlTypeMember));
@@ -872,6 +882,10 @@ QList<TLType> GeneratorNG::solveTypes(QMap<QString, TLType> types, QMap<QString,
                 TypeTreeItem *item = *currentItemIt;
                 bool solved = true;
                 for (TypeTreeItem *dependence : item->dependencies) {
+                    if (dependence == item) {
+                        // Depend on self
+                        continue;
+                    }
                     if (!notSolvedTypes.contains(dependence)) {
                         // Already solved
                         continue;

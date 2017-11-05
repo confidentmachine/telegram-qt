@@ -45,6 +45,10 @@ equals(BUILD_QML_IMPORT, "true") {
     SUBDIRS += imports/TelegramQtQml
 }
 
+isEmpty(BUILD_EXAMPLES) {
+    BUILD_EXAMPLES = "true"
+}
+
 !equals(BUILD_ONLY_LIBRARY, "true") {
     SUBDIRS += testApp
     CONFIG += ordered
@@ -59,6 +63,10 @@ equals(BUILD_QML_IMPORT, "true") {
             message("Use Qt 5.6.0 or higher to build GeneratorNG")
         }
     }
+}
+
+equals(BUILD_EXAMPLES, "true") {
+    SUBDIRS += examples
 }
 
 OTHER_FILES += CMakeLists.txt

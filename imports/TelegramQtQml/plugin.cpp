@@ -41,6 +41,34 @@ public:
     QString phoneNumber() const { return m_phoneNumber; }
     Format format() const { return m_format; }
 
+    Q_INVOKABLE QByteArray loadCredentialsData() const
+    {
+        if (m_phoneNumber.isEmpty()) {
+            qWarning() << Q_FUNC_INFO << "Phone number is empty" << m_phoneNumber;
+            return QByteArray();
+        }
+        const QString fileName = m_secretDirectory + QLatin1Char('/') + m_phoneNumber;
+        qDebug() << Q_FUNC_INFO << "dest filename:" << fileName;
+        QFile file(fileName);
+        if (!file.open(QIODevice::ReadOnly)) {
+            qWarning() << Q_FUNC_INFO << "Unable to open file" << fileName;
+            return QByteArray();
+        }
+        const QByteArray rawData = file.readAll();
+        if (rawData.isEmpty()) {
+            qWarning() << Q_FUNC_INFO << "The file is empty";
+            return QByteArray();
+        }
+
+        switch (m_format) {
+        case FormatBinary:
+            return rawData;
+        case FormatHex:
+            return QByteArray::fromHex(rawData);
+        }
+        return QByteArray();
+    }
+
 public slots:
     void setSecretDirectory(const QString &newDirectory)
     {
@@ -162,8 +190,11 @@ protected:
         }
         qDebug() << Q_FUNC_INFO << "Filename:" << fileName;
 
+        QUrl url(fileName);
+        qDebug() << url.toLocalFile();
+
         // TODO: Check if the file is readable and do something if it is not.
-        return QFile::exists(fileName);
+        return QFile::exists(url.toLocalFile());
     }
 
     void updateCredentialDataExist()

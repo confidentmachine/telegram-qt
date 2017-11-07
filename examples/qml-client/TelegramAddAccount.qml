@@ -2,7 +2,6 @@ import QtQuick 2.2
 import QtQuick.Controls 2.0
 import Qt.labs.platform 1.0
 import TelegramQt 1.0
-
 import TelegramQtTheme 1.0
 
 Column {
@@ -30,16 +29,6 @@ Column {
         format: AccountSecretHelper.FormatBinary
     }
 
-    AppInformation {
-        id: appInfo
-        appId: 14617
-        appHash: "e17ac360fd072f83d5d08db45ce9a121" // Telepathy-Morse app hash
-        appVersion: "0.1"
-        deviceInfo: "pc"
-        osInfo: "GNU/Linux"
-        languageCode: "en"
-    }
-
     QtObject {
         id: authHelper
 
@@ -56,7 +45,7 @@ Column {
             requestPhoneStatus(phone)
         }
 
-        property alias connectionState: telegramCore.connectionState
+        property int connectionState: telegramCore.connectionState
         property bool connected: connectionState >= TelegramNamespace.ConnectionStateConnected
         property bool phoneNumberNeeded: needsState === needsPhoneNumber
         property bool authCodeNeeded: needsState === needsAuthCode
@@ -113,42 +102,15 @@ Column {
             needsState = needsNothing
             tryPassword(password)
         }
-    }
 
-    TelegramCore {
-        id: telegramCore
-        updatesEnabled: false
-        applicationInformation: appInfo
-        onConnectionStateChanged: {
-            debugDataModel.addMessage("Connection state changed to " + state)
-
-//            if (state === TelegramNamespace.ConnectionStateAuthRequired) {
-//                debugDataModel.addMessage("requestPhoneCode " + phoneNumberField.text)
-//                telegramCore.requestPhoneCode(phoneNumberField.text)
-//                needsState = needsAuthCode
-//            }
-
-            if (state === TelegramNamespace.ConnectionStateAuthenticated) {
-                debugDataModel.addMessage("Authenticated and ready!")
-                needsState = needsNothing
-            }
-        }
-        onLoggedOut: {
-            debugDataModel.addMessage("Log out result: " + result)
-        }
-    }
-
-    Connections {
-        target: telegramCore
-
-        onPhoneStatusReceived: {
+        function setReceivedPhoneStatus(phone, registered) {
             debugDataModel.addMessage("phoneStatusReceived: " + phone + " registered: " + registered)
 
-            if (phone != pendingPhoneNumberForCheck) {
+            if (phone !== pendingPhoneNumberForCheck) {
                 debugDataModel.addMessage("Got statuses of different phone, than requested: " + phone + " vs " + pendingPhoneNumberForCheck)
             }
             pendingPhoneNumberForCheck = ""
-            if (phone == currentPhone) {
+            if (phone === currentPhone) {
                 if (registered) {
                     telegramCommonColumn.phoneRegistrationStatus = registrationStatus.registered
                 } else {
@@ -156,6 +118,12 @@ Column {
                 }
             }
         }
+    }
+
+    Connections {
+        target: telegramCore
+
+        onPhoneStatusReceived: authHelper.setReceivedPhoneStatus(phone, registered)
 
         onPhoneCodeRequired: {
             debugDataModel.addMessage("Phone code required")
@@ -195,6 +163,24 @@ Column {
         onPasswordInfoReceived: {
             debugDataModel.addMessage("onPasswordInfoReceived")
         }
+
+        onConnectionStateChanged: {
+            debugDataModel.addMessage("Connection state changed to " + state)
+
+//            if (state === TelegramNamespace.ConnectionStateAuthRequired) {
+//                debugDataModel.addMessage("requestPhoneCode " + phoneNumberField.text)
+//                authHelper.requestPhoneCode(phoneNumberField.text)
+//                needsState = needsAuthCode
+//            }
+
+            if (state === TelegramNamespace.ConnectionStateAuthenticated) {
+                debugDataModel.addMessage("Authenticated and ready!")
+                needsState = needsNothing
+            }
+        }
+        onLoggedOut: {
+            debugDataModel.addMessage("Log out result: " + result)
+        }
     }
 
     TextField {
@@ -215,7 +201,7 @@ Column {
         property string label: qsTr("Phone number")
 //        EnterKey.iconSource: "image://theme/icon-m-enter-accept"
 //        EnterKey.onClicked: {
-//            telegramCore.checkPhone(text)
+//            authHelper.checkPhone(text)
 //        }
         property bool errorOccured: {
             if (telegramCommonColumn.phoneRegistrationStatus !== registrationStatus.error) {
@@ -245,7 +231,7 @@ Column {
             enabled: phoneNumberField.enabled && !phoneNumberField.readOnly
             text: qsTr("Continue")
             onClicked: {
-                telegramCore.checkPhone(phoneNumberField.text)
+                authHelper.checkPhone(phoneNumberField.text)
             }
 
             Connections {
@@ -332,7 +318,7 @@ Column {
             Button {
                 text: telegramCommonColumn.phoneRegistrationStatus === registrationStatus.registered ? qsTr("Sign in") : qsTr("Sign up")
                 onClicked: {
-                    telegramCore.requestAuthCode(telegramCommonColumn.phoneNumber)
+                    authHelper.requestAuthCode(telegramCommonColumn.phoneNumber)
                 }
                 anchors.horizontalCenter: parent.horizontalCenter
             }
@@ -346,15 +332,15 @@ Column {
                         focus = true
                     }
                 }
-//                errorHighlight: telegramCore.authCodeNeeded && !text
+//                errorHighlight: authHelper.authCodeNeeded && !text
                 inputMethodHints: Qt.ImhNoPredictiveText | Qt.ImhNoAutoUppercase | Qt.ImhSensitiveData | Qt.ImhDigitsOnly
                 echoMode: TextInput.Password
                 property string label: qsTr("Auth code")
                 text: activeFocus ? "" : label
-                placeholderText: telegramCore.authCodeNeeded ? label : "Auth code is not required (yet)"
+                placeholderText: authHelper.authCodeNeeded ? label : "Auth code is not required (yet)"
 //                EnterKey.iconSource: "image://theme/icon-m-enter-accept"
 //                EnterKey.onClicked: {
-//                    telegramCore.trySignIn(phoneNumberField.text, authCodeField.text)
+//                    authHelper.trySignIn(phoneNumberField.text, authCodeField.text)
 //                }
             }
 
@@ -367,14 +353,14 @@ Column {
                         focus = true
                     }
                 }
-//                errorHighlight: telegramCore.passwordNeeded && !text
+//                errorHighlight: authHelper.passwordNeeded && !text
                 inputMethodHints: Qt.ImhNoPredictiveText | Qt.ImhNoAutoUppercase | Qt.ImhSensitiveData
                 echoMode: TextInput.Password
                 text: qsTr("Password") // label
-                placeholderText: telegramCore.passwordNeeded ? label : qsTr("Password is not required (yet)")
+                placeholderText: authHelper.passwordNeeded ? label : qsTr("Password is not required (yet)")
 //                EnterKey.iconSource: "image://theme/icon-m-enter-accept"
 //                EnterKey.onClicked: {
-//                    telegramCore.tryPassword2(text)
+//                    authHelper.tryPassword2(text)
 //                }
             }
         }
@@ -419,40 +405,5 @@ Column {
             }
         }
 
-        ListModel {
-            id: debugDataModel
-            function addMessage(message)
-            {
-                console.log(message)
-                append({"timestamp": Qt.formatDateTime(new Date(), "hh:mm:ss"), "message": message })
-            }
-        }
-
-        Switch {
-//        TextSwitch {
-            id: debugViewSwitch
-            text: qsTr("Show debug data")
-//            description: "Check this to view logs"
-        }
-
-        Repeater {
-            id: logRepeater
-            model: debugViewSwitch.checked ? debugDataModel : 0
-            Row {
-                spacing: Theme.paddingSmall
-                Label {
-                    text: model.timestamp
-                }
-                Label {
-                    text: model.message
-                    wrapMode: Text.Wrap
-                    width: telegramCommonColumn.width - x
-                }
-            }
-        }
-        Label {
-            visible: debugViewSwitch.checked && (logRepeater.count === 0)
-            text: qsTr("There is no log messages yet")
-        }
     }
 }

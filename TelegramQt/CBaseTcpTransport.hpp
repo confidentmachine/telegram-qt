@@ -50,6 +50,8 @@ protected slots:
 
 protected:
     void setSocket(QAbstractSocket *socket);
+    virtual void readEvent() { }
+    virtual void sendEvent() { }
 
     quint32 m_packetNumber;
     quint32 m_expectedLength;

@@ -51,6 +51,8 @@ QString formatTLValue(const TLValue &val)
 #include "TLRpcDebug.hpp"
 #endif
 
+#define TELEGRAMQT_DEBUG_REVEAL_SECRETS
+
 using namespace TelegramUtils;
 
 static const quint32 s_defaultAuthInterval = 15000; // 15 sec
@@ -94,6 +96,7 @@ void CTelegramConnection::setDcInfo(const TLDcOption &newDcInfo)
 
 void CTelegramConnection::setServerRsaKey(const Telegram::RsaKey &key)
 {
+    qDebug() << Q_FUNC_INFO << "Set server key:" << key.modulus.toHex() << key.exponent.toHex() << key.secretExponent.toHex() << key.fingerprint;
     m_rsaKey = key;
 }
 
@@ -1900,7 +1903,10 @@ bool CTelegramConnection::acceptPqAuthorization(const QByteArray &payload)
     inputStream >> clientNonce;
 
     if (clientNonce != m_clientNonce) {
-        qDebug() << "Error: Client nonce in incoming package is different from our own.";
+        qWarning() << "Error: Client nonce in incoming package is different from our own.";
+#ifdef TELEGRAMQT_DEBUG_REVEAL_SECRETS
+    qDebug() << Q_FUNC_INFO << "Remote client nonce:" << clientNonce << "local:" << m_clientNonce;
+#endif
         return false;
     }
 
@@ -1917,7 +1923,10 @@ bool CTelegramConnection::acceptPqAuthorization(const QByteArray &payload)
         return false;
     }
 
+    qDebug() << "PQ data:" << pq.toHex();
     m_pq = qFromBigEndian<quint64>(reinterpret_cast<const uchar*>(pq.constData()));
+
+    qDebug() << "PQ:" << m_pq;
 
     quint64 div1 = Utils::findDivider(m_pq);
 
@@ -1997,7 +2006,13 @@ void CTelegramConnection::requestDhParameters()
         randomPadding.resize(requestedEncryptedPackageLength - (sha.length() + innerData.length()));
         Utils::randomBytes(&randomPadding);
 
+        qDebug() << Q_FUNC_INFO << "sha length:" << sha.size();
+        qDebug() << "Encrypt with key" << m_rsaKey.modulus << m_rsaKey.exponent << m_rsaKey.fingerprint;
         encryptedPackage = Utils::rsa(sha + innerData + randomPadding, m_rsaKey);
+#ifdef TELEGRAMQT_DEBUG_REVEAL_SECRETS
+        qDebug() << Q_FUNC_INFO << "Inner sha:" << QByteArrayLiteral("0x") + sha.toHex();
+        qDebug() << Q_FUNC_INFO << "Inner data:" << QByteArrayLiteral("0x") + innerData.toHex();
+    #endif
     }
 
     QByteArray output;
@@ -2014,6 +2029,7 @@ void CTelegramConnection::requestDhParameters()
     qToBigEndian(m_q, (uchar *) bigEndianNumber.data());
     outputStream << bigEndianNumber;
 
+    qDebug() << Q_FUNC_INFO << "public server fs:" << m_rsaKey.fingerprint;
     outputStream << m_rsaKey.fingerprint;
 
     outputStream << encryptedPackage;
@@ -4291,6 +4307,9 @@ void CTelegramConnection::onTransportStateChanged()
 void CTelegramConnection::onTransportReadyRead()
 {
     const QByteArray input = m_transport->getPackage();
+
+    qDebug() << "Read" << input.length() << "bytes";
+
     CRawStream inputStream(input);
 
     quint64 authId = 0;
@@ -4310,6 +4329,7 @@ void CTelegramConnection::onTransportReadyRead()
         }
 
         payload = inputStream.readBytes(length);
+        qDebug() << "read payload:" << length;
 #ifdef DEVELOPER_BUILD
         qDebug() << Q_FUNC_INFO << "new plain package in auth state" << m_authState << "payload:" << TLValue::firstFromArray(payload);
 #endif

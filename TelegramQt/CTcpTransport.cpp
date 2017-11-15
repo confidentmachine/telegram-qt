@@ -38,19 +38,18 @@ bool CTcpTransport::setProxy(const QNetworkProxy &proxy)
     return true;
 }
 
-void CTcpTransport::sendPackage(const QByteArray &payload)
-{
-    if (m_firstPackage) {
-        m_socket->putChar(char(0xef)); // Start session in Abridged format
-        m_firstPackage = false;
-    }
-    CBaseTcpTransport::sendPackage(payload);
-}
-
 void CTcpTransport::setState(QAbstractSocket::SocketState newState)
 {
     if (newState == QAbstractSocket::ConnectedState) {
         m_firstPackage = true;
     }
     CBaseTcpTransport::setState(newState);
+}
+
+void CTcpTransport::sendEvent()
+{
+    if (m_firstPackage) {
+        m_socket->putChar(char(0xef)); // Start session in Abridged format
+        m_firstPackage = false;
+    }
 }

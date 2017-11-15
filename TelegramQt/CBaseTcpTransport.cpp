@@ -35,7 +35,7 @@ CBaseTcpTransport::CBaseTcpTransport(QObject *parent) :
 
 CBaseTcpTransport::~CBaseTcpTransport()
 {
-    if (m_socket->isWritable()) {
+    if (m_socket && m_socket->isWritable()) {
         m_socket->waitForBytesWritten(100);
         m_socket->disconnectFromHost();
     }
@@ -54,7 +54,9 @@ void CBaseTcpTransport::disconnectFromHost()
 #ifdef DEVELOPER_BUILD
     qDebug() << Q_FUNC_INFO;
 #endif
-    m_socket->disconnectFromHost();
+    if (m_socket) {
+        m_socket->disconnectFromHost();
+    }
 }
 
 bool CBaseTcpTransport::isConnected() const
@@ -64,6 +66,7 @@ bool CBaseTcpTransport::isConnected() const
 
 void CBaseTcpTransport::sendPackage(const QByteArray &payload)
 {
+    sendEvent();
     // quint32 length (included length itself + packet number + crc32 + payload // Length MUST be divisible by 4
     // quint32 packet number
     // quint32 CRC32 (length, quint32 packet number, payload)
@@ -119,6 +122,7 @@ void CBaseTcpTransport::setState(QAbstractSocket::SocketState newState)
 
 void CBaseTcpTransport::onReadyRead()
 {
+    readEvent();
     while (m_socket->bytesAvailable() > 0) {
         if (m_expectedLength == 0) {
             if (m_socket->bytesAvailable() < 4) {

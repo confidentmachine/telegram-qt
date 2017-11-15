@@ -23,6 +23,15 @@
 #include "crypto-aes.hpp"
 #include "TelegramNamespace.hpp"
 
+struct RsaPrivateKey {
+    QByteArray modulus; // n
+    QByteArray exponent; // e
+    QByteArray d; // d, secret exponent
+    QByteArray p; // p
+    QByteArray q; // q
+    quint64 fingersprint;
+};
+
 class Utils
 {
 public:
@@ -37,6 +46,8 @@ public:
     static quint64 getRsaFingersprint(const Telegram::RsaKey &key);
     static Telegram::RsaKey loadHardcodedKey();
     static Telegram::RsaKey loadRsaKeyFromFile(const QString &fileName);
+    static RsaPrivateKey loadRsaPrivateKeyFromFile2(const QString &fileName);
+    static Telegram::RsaKey loadRsaPrivateKeyFromFile(const QString &fileName);
     static Telegram::RsaKey loadRsaKey();
     static QByteArray binaryNumberModExp(const QByteArray &data, const QByteArray &mod, const QByteArray &exp);
     static QByteArray rsa(const QByteArray &data, const Telegram::RsaKey &key);

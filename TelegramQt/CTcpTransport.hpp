@@ -28,13 +28,11 @@ public:
 
     bool setProxy(const QNetworkProxy &proxy);
 
-public slots:
-    void sendPackage(const QByteArray &payload) override;
-
 protected slots:
     void setState(QAbstractSocket::SocketState newState) override;
 
 protected:
+    void sendEvent() final;
     bool m_firstPackage;
 };
 

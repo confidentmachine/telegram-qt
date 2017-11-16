@@ -40,6 +40,7 @@ SOURCES = CTelegramCore.cpp \
     Utils.cpp \
     FileRequestDescriptor.cpp \
     TelegramUtils.cpp \
+    CBaseTcpTransport.cpp \
     CTcpTransport.cpp \
     TelegramNamespace.cpp \
     CTelegramConnection.cpp \
@@ -71,6 +72,7 @@ HEADERS = CTelegramCore.hpp \
     FileRequestDescriptor.hpp \
     TelegramUtils.hpp \
     CTelegramTransport.hpp \
+    CBaseTcpTransport.hpp \
     CTcpTransport.hpp \
     TLTypes.hpp \
     TLNumbers.hpp \

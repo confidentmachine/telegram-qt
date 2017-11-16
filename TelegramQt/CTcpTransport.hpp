@@ -18,50 +18,24 @@
 #ifndef CTCPTRANSPORT_HPP
 #define CTCPTRANSPORT_HPP
 
-#include "CTelegramTransport.hpp"
+#include "CBaseTcpTransport.hpp"
 
-QT_FORWARD_DECLARE_CLASS(QTcpSocket)
-QT_FORWARD_DECLARE_CLASS(QTimer)
-
-class CTcpTransport : public CTelegramTransport
+class CTcpTransport : public CBaseTcpTransport
 {
     Q_OBJECT
 public:
     explicit CTcpTransport(QObject *parent = nullptr);
-    ~CTcpTransport();
 
-    void connectToHost(const QString &ipAddress, quint32 port) override;
-    void disconnectFromHost() override;
     bool setProxy(const QNetworkProxy &proxy);
-
-    bool isConnected() const override;
-
-    QByteArray getPackage() override { return m_receivedPackage; }
-
-    // Method for testing
-    QByteArray lastPackage() const override { return m_lastPackage; }
 
 public slots:
     void sendPackage(const QByteArray &payload) override;
 
-private slots:
-    void onStateChanged(QAbstractSocket::SocketState newState);
-    void onError(QAbstractSocket::SocketError error);
-    void onReadyRead();
-    void onTimeout();
+protected slots:
+    void setState(QAbstractSocket::SocketState newState) override;
 
-private:
-    quint32 m_packetNumber;
-    quint32 m_expectedLength;
-
-    QByteArray m_receivedPackage;
-    QByteArray m_lastPackage;
-
-    QTcpSocket *m_socket;
-    QTimer *m_timeoutTimer;
-
+protected:
     bool m_firstPackage;
-
 };
 
 #endif // CTCPTRANSPORT_HPP

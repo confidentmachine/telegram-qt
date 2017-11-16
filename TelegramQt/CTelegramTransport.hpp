@@ -51,9 +51,9 @@ signals:
 public slots:
     virtual void sendPackage(const QByteArray &package) = 0;
 
-protected:
+protected slots:
     void setError(QAbstractSocket::SocketError error);
-    void setState(QAbstractSocket::SocketState state);
+    virtual void setState(QAbstractSocket::SocketState state);
 
 private:
     QAbstractSocket::SocketError m_error;

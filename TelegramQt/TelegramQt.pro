@@ -44,7 +44,8 @@ SOURCES = CTelegramCore.cpp \
     TelegramNamespace.cpp \
     CTelegramConnection.cpp \
     RpcProcessingContext.cpp \
-    TLValues.cpp
+    TLValues.cpp \
+    CBaseTcpTransport.cpp
 
 PUBLIC_HEADERS += \
     telegramqt_global.h \
@@ -81,7 +82,8 @@ HEADERS = CTelegramCore.hpp \
     TelegramNamespace.hpp \
     TelegramNamespace_p.hpp \
     telegramqt_global.h \
-    TLValues.hpp
+    TLValues.hpp \
+    CBaseTcpTransport.hpp
 
 contains(options, developer-build) {
     SOURCES += TLTypesDebug.cpp TLRpcDebug.cpp

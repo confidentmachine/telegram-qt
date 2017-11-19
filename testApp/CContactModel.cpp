@@ -230,7 +230,7 @@ void CContactModel::addContact(quint32 id)
     if (hasContact(id)) {
         return;
     }
-    qDebug() << Q_FUNC_INFO << id;
+//    qDebug() << Q_FUNC_INFO << id;
 
     beginInsertRows(QModelIndex(), m_contacts.count(), m_contacts.count());
     addContactId(id);

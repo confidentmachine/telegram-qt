@@ -62,6 +62,7 @@ QString CFileManager::requestFile(const Telegram::RemoteFile &file)
 
 QString CFileManager::requestPeerPicture(const Telegram::Peer &peer, Telegram::PeerPictureSize size)
 {
+    return QString();
     Telegram::RemoteFile file;
     if (!getPeerPictureFileInfo(peer, &file, size)) {
         return QString();

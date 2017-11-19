@@ -47,6 +47,7 @@ QString formatTLValue(const TLValue &val)
 #include "RpcProcessingContext.hpp"
 
 #ifdef DEVELOPER_BUILD
+#define DUMP_OUTGOING_RPC
 #include "TLRpcDebug.hpp"
 #endif
 
@@ -4585,6 +4586,14 @@ quint64 CTelegramConnection::sendEncryptedPackage(const QByteArray &buffer, bool
     outputStream << encryptedPackage;
 
     m_transport->sendPackage(output);
+
+#ifdef DUMP_OUTGOING_RPC
+    {
+        CTelegramStream outputStream(buffer);
+        qDebug() << Q_FUNC_INFO << m_dcInfo.id << m_dcInfo.ipAddress;
+        dumpRpc(outputStream);
+    }
+#endif
 
 #ifdef NETWORK_LOGGING
     CTelegramStream readBack(buffer);

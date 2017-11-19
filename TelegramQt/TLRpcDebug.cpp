@@ -18,8 +18,8 @@
 #include "TLRpcDebug.hpp"
 
 #include "TLTypesDebug.hpp"
-
 #include "CTelegramStream.hpp"
+#include "Debug_p.hpp"
 
 void dumpRpc(CTelegramStream &stream)
 {

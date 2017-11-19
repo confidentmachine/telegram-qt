@@ -1164,7 +1164,7 @@ void CTelegramDispatcher::onMessagesHistoryReceived(const TLMessagesMessages &me
 void CTelegramDispatcher::onMessagesDialogsReceived(const TLMessagesDialogs &dialogs, quint32 offsetDate, quint32 offsetId, const TLInputPeer &offsetPeer, quint32 limit)
 {
 #ifdef DEVELOPER_BUILD
-    qDebug() << Q_FUNC_INFO << dialogs << offsetDate << offsetId << offsetPeer << limit;
+    qDebug() << Q_FUNC_INFO << offsetDate << offsetId << offsetPeer << limit;
 #else
     const Telegram::Peer peer = toPublicPeer(offsetPeer);
     qDebug() << Q_FUNC_INFO << dialogs.tlType << offsetDate << offsetId << peer.type << peer.id << limit;
@@ -1337,6 +1337,7 @@ void CTelegramDispatcher::getDifference()
         qWarning() << "Unexpected getDifference() call!";
         return;
     }
+    qDebug() << "Up from" << m_updatesState.pts << "to" << m_actualState.pts;
     mainConnection()->updatesGetDifference(m_updatesState.pts, m_updatesState.date, m_updatesState.qts);
 }
 
@@ -1387,7 +1388,7 @@ void CTelegramDispatcher::onUpdatesDifferenceReceived(const TLUpdatesDifference 
 void CTelegramDispatcher::onUpdatesChannelDifferenceReceived(const TLUpdatesChannelDifference &updatesDifference)
 {
 #ifdef DEVELOPER_BUILD
-    qDebug() << Q_FUNC_INFO << updatesDifference;
+    qDebug() << Q_FUNC_INFO << updatesDifference.tlType;
 #endif
 
     switch (updatesDifference.tlType) {
@@ -1475,7 +1476,7 @@ inline bool ensureDcOption(QVector<TLDcOption> *vector, const TLDcOption &option
 void CTelegramDispatcher::processUpdate(const TLUpdate &update)
 {
 #ifdef DEVELOPER_BUILD
-    qDebug() << Q_FUNC_INFO << update;
+//    qDebug() << Q_FUNC_INFO << update.tlType;
 #endif
 
     switch (update.tlType) {

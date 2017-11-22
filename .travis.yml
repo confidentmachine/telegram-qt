@@ -4,10 +4,9 @@ language: cpp
 compiler:
   - gcc
   - clang
-
 env:
   - DEVELOPER_BUILD=true
-  - DEVELOPER_BUILD=false
+  - USE_QT5=true
 
 before_install:
   # g++4.8.1
@@ -17,25 +16,47 @@ before_install:
   - if [ "$CXX" == "clang++" ]; then sudo add-apt-repository -y ppa:h-rayflood/llvm; fi
 
   - sudo apt-add-repository -y ppa:roblib/ppa
-  - sudo apt-add-repository -y ppa:beineri/opt-qt562-trusty
-  - sudo apt-get -qq update
+  - if [ "${USE_QT5}" == "true" ]; then
+           sudo apt-add-repository -y ppa:beineri/opt-qt562-trusty
+        && sudo apt-get -qq update
+        && sudo apt-get install -y qt56base qt56tools
+        ;
+    else
+        sudo apt-get install -y libqt4-dev ;
+    fi
 
   # g++4.8.1
-  - if [ "$CXX" = "g++" ]; then sudo apt-get install -qq g++-4.8; fi
-  - if [ "$CXX" = "g++" ]; then export CXX="g++-4.8" CC="gcc-4.8"; fi
+  - if [ "$CXX" == "g++" ]; then sudo apt-get install -qq g++-4.8; fi
+  - if [ "$CXX" == "g++" ]; then export CXX="g++-4.8" CC="gcc-4.8"; fi
 
   # clang 3.4
   - if [ "$CXX" == "clang++" ]; then sudo apt-get install --allow-unauthenticated -qq clang-3.4; fi
   - if [ "$CXX" == "clang++" ]; then export CXX="clang++-3.4"; fi
 
-  - sudo apt-get -qq install cmake qt56base qt56tools
+  - sudo apt-get -qq install cmake
 
 before_script:
-  - export QTDIR="/opt/qt56"
-  - export PATH="$QTDIR/bin:$PATH"
-  - qt56-env.sh
+  - if [ "${USE_QT5}" == "true" ]; then
+        export QTDIR="/opt/qt56"
+        export PATH="$QTDIR/bin:$PATH"
+        qt56-env.sh
+        ;
+    fi
+
+  - if [ "${DEVELOPER_BUILD}" != "true" ]; then
+        echo "Developer build is ON" ;
+    else
+        echo "Developer build is OFF" ; export DEVELOPER_BUILD=false
+    fi
+
   - mkdir ../build; cd ../build
-  - cmake -DDEVELOPER_BUILD=${DEVELOPER_BUILD} -DENABLE_TESTAPP=true ../telegram-qt
+  - if [ "${USE_QT5}" == "true" ]; then
+        echo "Qt5 build"
+        cmake -DUSE_QT5=true -DDEVELOPER_BUILD=${DEVELOPER_BUILD} -DENABLE_TESTAPP=true ../telegram-qt ;
+    else
+        echo "Qt4 build"
+        cmake -DUSE_QT4=true -DDEVELOPER_BUILD=${DEVELOPER_BUILD} -DENABLE_TESTAPP=true ../telegram-qt ;
+    fi
 
 script:
   - make -j3 -k

@@ -136,8 +136,10 @@ public:
 
     bool setWantedDc(quint32 dc);
     CTelegramConnection *mainConnection() const { return m_mainConnection; }
+    CTelegramConnection *getConnection() const;
     CTelegramConnection *getExtraConnection(quint32 dc);
 
+    void addConnection(CTelegramConnection *connection);
     CTelegramConnection *createConnection(const TLDcOption &dcInfo);
     void ensureSignedConnection(CTelegramConnection *connection);
     void clearConnection(CTelegramConnection *connection);

@@ -349,7 +349,7 @@ bool CTelegramDispatcher::connectToServer()
         qWarning() << "CTelegramDispatcher::connectToServer(): Connection is already in progress.";
         return false;
     }
-    if (m_authKey.isEmpty()) {
+    if (m_authKey.isEmpty() || !m_mainDcInfo.id || m_mainDcInfo.ipAddress.isEmpty()) {
         return connectToTheNextDcAddress();
     }
     connectToTheWantedDc();
@@ -380,7 +380,7 @@ bool CTelegramDispatcher::connectToTheNextDcAddress()
     TLDcOption dcInfo;
     dcInfo.ipAddress = m_connectionAddresses.at(m_autoConnectionDcIndex).address;
     dcInfo.port = m_connectionAddresses.at(m_autoConnectionDcIndex).port;
-    setMainConnection(createConnection(dcInfo));
+    addConnection(createConnection(dcInfo));
     initConnectionSharedFinal();
     return true;
 }
@@ -591,7 +591,7 @@ void CTelegramDispatcher::initConnectionSharedFinal()
     m_updatesStateIsLocked = false;
     // TODO: Check if the reset() method is a more appropriate place for the selfUserId reset.
     m_selfUserId = 0;
-    m_mainConnection->connectToDc();
+    getConnection()->connectToDc();
 }
 
 void CTelegramDispatcher::disconnectFromServer()
@@ -915,6 +915,20 @@ bool CTelegramDispatcher::setWantedDc(quint32 dc)
         ensureMainConnectToWantedDc();
     }
     return true;
+}
+
+CTelegramConnection *CTelegramDispatcher::getConnection() const
+{
+    if (mainConnection()) {
+        return mainConnection();
+    }
+    if (m_extraConnections.isEmpty()) {
+        return nullptr;
+    }
+    if (m_extraConnections.count() != 1) {
+        qWarning() << Q_FUNC_INFO << "Asked for a connection, but there is a plenty of them. Use the first one...";
+    }
+    return m_extraConnections.first();
 }
 
 bool CTelegramDispatcher::getDialogInfo(Telegram::DialogInfo *info, const Telegram::Peer peer) const
@@ -2133,9 +2147,13 @@ CTelegramConnection *CTelegramDispatcher::getExtraConnection(quint32 dc)
     qDebug() << Q_FUNC_INFO << dc;
 #endif
     for (int i = 0; i < m_extraConnections.count(); ++i) {
-        if (m_extraConnections.at(i)->dcInfo().id == dc) {
-            return m_extraConnections.at(i);
+        if (m_extraConnections.at(i)->dcInfo().id != dc) {
+            continue;
         }
+        if (m_extraConnections.at(i) == mainConnection()) {
+            continue;
+        }
+        return m_extraConnections.at(i);
     }
 
     const TLDcOption dcInfo = dcInfoById(dc);
@@ -2152,12 +2170,16 @@ CTelegramConnection *CTelegramDispatcher::getExtraConnection(quint32 dc)
         connection->setServerSalt(mainConnection()->serverSalt());
     }
 
-    m_extraConnections.append(connection);
 
 #ifdef DEVELOPER_BUILD
     qDebug() << Q_FUNC_INFO << dc << connection;
 #endif
     return connection;
+}
+
+void CTelegramDispatcher::addConnection(CTelegramConnection *connection)
+{
+    m_extraConnections.append(connection);
 }
 
 void CTelegramDispatcher::onConnectionAuthChanged(int newStateInt, quint32 dc)

@@ -37,6 +37,7 @@ public:
 
     // Connections API
     bool setWantedDc(quint32 dcId);
+    CTelegramConnection *getConnection() const;
     CTelegramConnection *mainConnection() const;
     CTelegramConnection *getExtraConnection(quint32 dc);
 

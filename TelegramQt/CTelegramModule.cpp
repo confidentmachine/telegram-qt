@@ -38,6 +38,14 @@ bool CTelegramModule::setWantedDc(quint32 dcId)
     return m_dispatcher->setWantedDc(dcId);
 }
 
+CTelegramConnection *CTelegramModule::getConnection() const
+{
+    if (!m_dispatcher) {
+        return nullptr;
+    }
+    return m_dispatcher->getConnection();
+}
+
 CTelegramConnection *CTelegramModule::mainConnection() const
 {
     if (!m_dispatcher) {

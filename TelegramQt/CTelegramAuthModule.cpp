@@ -49,33 +49,33 @@ bool CTelegramAuthModule::logOut()
 
 void CTelegramAuthModule::requestPhoneStatus(const QString &phoneNumber)
 {
-    if (!mainConnection()) {
+    if (!getConnection()) {
         return;
     }
-    mainConnection()->authCheckPhone(phoneNumber);
+    getConnection()->authCheckPhone(phoneNumber);
 }
 
 quint64 CTelegramAuthModule::getPassword()
 {
-    if (!mainConnection()) {
+    if (!getConnection()) {
         return 0;
     }
 
     m_passwordInfo.clear();
 
-    return mainConnection()->accountGetPassword();
+    return getConnection()->accountGetPassword();
 }
 
 void CTelegramAuthModule::tryPassword(const QByteArray &salt, const QByteArray &password)
 {
-    if (!mainConnection()) {
+    if (!getConnection()) {
         return;
     }
 
     const QByteArray pwdData = salt + password + salt;
     const QByteArray pwdHash = Utils::sha256(pwdData);
 
-    mainConnection()->authCheckPassword(pwdHash);
+    getConnection()->authCheckPassword(pwdHash);
 }
 
 void CTelegramAuthModule::tryPassword(const QString &password)
@@ -89,18 +89,18 @@ void CTelegramAuthModule::tryPassword(const QString &password)
 
 void CTelegramAuthModule::signIn(const QString &phoneNumber, const QString &authCode)
 {
-    if (!mainConnection()) {
+    if (!getConnection()) {
         return;
     }
-    mainConnection()->signIn(phoneNumber, authCode);
+    getConnection()->signIn(phoneNumber, authCode);
 }
 
 void CTelegramAuthModule::signUp(const QString &phoneNumber, const QString &authCode, const QString &firstName, const QString &lastName)
 {
-    if (!mainConnection()) {
+    if (!getConnection()) {
         return;
     }
-    mainConnection()->signUp(phoneNumber, authCode, firstName, lastName);
+    getConnection()->signUp(phoneNumber, authCode, firstName, lastName);
 }
 
 quint64 CTelegramAuthModule::requestAuthCode(const QString &phoneNumber)
@@ -118,14 +118,14 @@ quint64 CTelegramAuthModule::requestAuthCode(const QString &phoneNumber)
         return 0;
     }
     m_requestedCodeForPhone = phoneNumber;
-    return mainConnection()->requestPhoneCode(phoneNumber);
+    return getConnection()->requestPhoneCode(phoneNumber);
 }
 
 void CTelegramAuthModule::onUnauthorizedErrorReceived(TelegramNamespace::UnauthorizedError errorCode)
 {
     switch (errorCode) {
     case TelegramNamespace::UnauthorizedSessionPasswordNeeded:
-        mainConnection()->accountGetPassword();
+        getConnection()->accountGetPassword();
         break;
     default:
         break;
